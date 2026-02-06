@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔍 Pencarian Produk - Inventory Stock</title>
+    <title>Inventory Checker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
@@ -13,1099 +13,959 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        /* Login Screen */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 30px;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
 
-        h1 {
+        .login-container h2 {
             text-align: center;
             color: #667eea;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
             margin-bottom: 30px;
-            font-size: 1.1em;
+            font-size: 28px;
         }
 
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+        .login-container input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
         }
 
-        .stat-card {
+        .login-container input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 15px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-container button:hover {
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Main App */
+        .app-container {
+            display: none;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
             padding: 20px;
             border-radius: 15px;
-            color: white;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        .stat-card h3 {
-            font-size: 0.9em;
-            margin-bottom: 10px;
-            opacity: 0.9;
-        }
-
-        .stat-card .value {
-            font-size: 2em;
-            font-weight: bold;
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 24px;
         }
 
         .upload-section {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            border: 2px dashed #667eea;
-        }
-
-        .upload-section h2 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.3em;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .file-input-wrapper {
             position: relative;
+            overflow: hidden;
             display: inline-block;
-            width: 100%;
-            margin-bottom: 15px;
         }
 
-        .file-input-wrapper input[type="file"] {
+        .file-input-wrapper input[type=file] {
             position: absolute;
             left: -9999px;
         }
 
-        .file-input-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 15px 30px;
+        .file-input-wrapper label {
+            padding: 12px 24px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-            font-size: 1.1em;
+            font-weight: 600;
+            display: inline-block;
+            transition: transform 0.2s;
         }
 
-        .file-input-label:hover {
+        .file-input-wrapper label:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
         .file-name {
-            margin-top: 10px;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            color: #667eea;
-            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .last-update {
+            color: #27ae60;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-content {
             text-align: center;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-            transition: all 0.3s;
-            margin-right: 10px;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
         }
 
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
 
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+
+        /* Search Section */
         .search-section {
-            margin-bottom: 30px;
-        }
-
-        .search-section h2 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-
-        .search-controls {
-            display: flex;
-            gap: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 15px;
         }
 
         .search-input {
-            flex: 1;
-            padding: 15px 20px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            font-size: 1em;
-            min-width: 250px;
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
         }
 
         .search-input:focus {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
         }
 
-        select {
-            padding: 15px 20px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            font-size: 1em;
-            cursor: pointer;
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
             background: white;
+            border: 2px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        .search-type-selector {
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #f8f9fa;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-highlight {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .filters {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
-            justify-content: center;
+            flex-wrap: wrap;
         }
 
-        .search-type-btn {
-            padding: 10px 25px;
+        .filter-btn {
+            padding: 10px 20px;
             border: 2px solid #667eea;
             background: white;
             color: #667eea;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             transition: all 0.3s;
         }
 
-        .search-type-btn.active {
+        .filter-btn.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
-        .search-type-btn:hover {
+        .filter-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
         }
 
-        .products-container {
-            max-height: 600px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        .products-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .products-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .products-container::-webkit-scrollbar-thumb {
-            background: #667eea;
-            border-radius: 10px;
-        }
-
-        .product-card {
+        /* Results Section */
+        .results-section {
             background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 15px;
             padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-height: 400px;
         }
 
-        .product-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .product-header {
-            margin-bottom: 15px;
-        }
-
-        .product-spesifikasi {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-
-        .product-kodebarang {
-            font-size: 1.1em;
-            color: #764ba2;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .product-sku {
-            color: #666;
-            font-size: 0.95em;
-        }
-
-        .product-info {
+        .results-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 10px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
             gap: 10px;
         }
 
-        .stock-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
+        .results-count {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
         }
 
-        .stock-item {
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            color: white;
-            transition: all 0.3s;
-        }
-
-        .stock-item:hover {
-            transform: scale(1.05);
-        }
-
-        /* Indikator warna stok */
-        .stock-empty {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-        }
-
-        .stock-low {
-            background: linear-gradient(135deg, #ffd93d 0%, #ffb700 100%);
-        }
-
-        .stock-medium {
-            background: linear-gradient(135deg, #6bcf7f 0%, #4caf50 100%);
-        }
-
-        .stock-high {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .stock-label {
-            font-size: 0.85em;
-            opacity: 0.9;
-            margin-bottom: 5px;
-        }
-
-        .stock-value {
-            font-size: 1.3em;
-            font-weight: bold;
-        }
-
-        .stock-status {
-            font-size: 0.75em;
-            opacity: 0.85;
-            margin-top: 3px;
-        }
-
-        .empty-state {
+        .no-data {
             text-align: center;
             padding: 60px 20px;
             color: #999;
         }
 
-        .empty-state-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
+        .no-data-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
         }
 
-        .password-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+        /* Product Cards */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
         }
 
-        .password-modal {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
+        .product-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
         }
 
-        .password-modal h2 {
+        .product-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .product-header {
+            margin-bottom: 12px;
+        }
+
+        .product-sku {
+            font-weight: 700;
             color: #667eea;
-            margin-bottom: 20px;
+            font-size: 16px;
+            margin-bottom: 5px;
         }
 
-        .password-modal input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            font-size: 1em;
-            margin-bottom: 20px;
+        .product-name {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+            font-weight: 600;
         }
 
-        .password-modal button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .password-modal button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .watermark {
-            text-align: center;
-            margin-top: 30px;
-            color: #999;
-            font-size: 0.9em;
-        }
-
-        .confirm-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .confirm-content {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-        }
-
-        .confirm-content h2 {
-            color: #f5576c;
-            margin-bottom: 20px;
-        }
-
-        .confirm-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .confirm-buttons button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-confirm {
-            background: #f5576c;
-            color: white;
-        }
-
-        .btn-cancel {
-            background: #e0e0e0;
+        .product-category {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 12px;
             color: #666;
+            margin-top: 8px;
         }
 
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(102, 126, 234, 0.95);
-            display: none;
+        .product-prices {
+            margin: 12px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            flex-direction: column;
+            margin-bottom: 6px;
         }
 
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-top: 5px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+        .price-row:last-child {
+            margin-bottom: 0;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .price-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
         }
 
-        .loading-text {
-            color: white;
-            font-size: 1.3em;
-            font-weight: bold;
+        .price-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: #27ae60;
+        }
+
+        .stock-section {
+            margin-top: 12px;
+        }
+
+        .stock-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
             margin-bottom: 10px;
         }
 
-        .loading-progress {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 1em;
+        .stock-total-label {
+            font-weight: 600;
+            color: white;
+            font-size: 14px;
         }
 
-        .legend {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
+        .stock-total-value {
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
         }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
+        .warehouse-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
             gap: 8px;
-            padding: 8px 15px;
+        }
+
+        .warehouse-item {
+            text-align: center;
+            padding: 8px 4px;
+            border-radius: 6px;
+            transition: transform 0.2s;
+        }
+
+        .warehouse-item:hover {
+            transform: scale(1.05);
+        }
+
+        .warehouse-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .warehouse-qty {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        /* Stock Colors */
+        .stock-empty {
+            background: #ffe5e5;
+            color: #e74c3c;
+        }
+
+        .stock-low {
+            background: #fff5e5;
+            color: #f39c12;
+        }
+
+        .stock-good {
+            background: #e5ffe5;
+            color: #27ae60;
+        }
+
+        /* Logout Button */
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
             border-radius: 8px;
-            background: white;
-            font-size: 0.9em;
+            cursor: pointer;
+            font-weight: 600;
+            z-index: 100;
+            transition: all 0.3s;
         }
 
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 5px;
+        .logout-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
         }
 
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
+            .login-container {
+                margin: 50px 20px;
+                padding: 30px 20px;
             }
 
-            h1 {
-                font-size: 1.8em;
+            .header h1 {
+                font-size: 20px;
             }
 
-            .search-controls {
+            .upload-section {
                 flex-direction: column;
+                align-items: stretch;
             }
 
-            .search-input {
-                min-width: 100%;
+            .file-input-wrapper label {
+                text-align: center;
             }
 
-            .stock-grid {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            .product-grid {
+                grid-template-columns: 1fr;
             }
 
-            .search-type-selector {
+            .results-header {
                 flex-direction: column;
+                align-items: stretch;
             }
 
-            .search-type-btn {
-                width: 100%;
+            .filters {
+                justify-content: center;
+            }
+
+            .filter-btn {
+                flex: 1;
+                min-width: 100px;
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+
+            .logout-btn {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+
+            .warehouse-grid {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .product-card {
+                padding: 12px;
+            }
+
+            .product-sku {
+                font-size: 14px;
+            }
+
+            .product-name {
+                font-size: 13px;
+            }
+
+            .warehouse-grid {
+                grid-template-columns: repeat(3, 1fr);
             }
         }
     </style>
 </head>
 <body>
-    <div class="password-overlay" id="passwordOverlay">
-        <div class="password-modal">
-            <h2>🔐 Login</h2>
-            <p>Masukkan password untuk mengakses sistem</p>
-            <input type="password" id="passwordInput" placeholder="Password">
-            <button onclick="checkPassword()">Masuk</button>
-            <div class="watermark" style="margin-top: 20px;">LAU SAPE EMPRUY</div>
-        </div>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginContainer">
+        <h2>🔐 Inventory Checker</h2>
+        <input type="password" id="passwordInput" placeholder="Masukkan Password" autocomplete="off">
+        <button onclick="login()">Login</button>
+        <div class="error-message" id="errorMessage">Password salah! Coba lagi.</div>
     </div>
 
-    <div class="confirm-modal" id="confirmModal">
-        <div class="confirm-content">
-            <h2>⚠️ Konfirmasi</h2>
-            <p>Apakah Anda yakin ingin menghapus semua data?</p>
-            <div class="confirm-buttons">
-                <button class="btn-confirm" onclick="confirmDelete()">Ya, Hapus</button>
-                <button class="btn-cancel" onclick="closeConfirmModal()">Batal</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Memproses File...</div>
-        <div class="loading-progress" id="loadingProgress">0%</div>
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="loading-text">Memproses Database...</div>
+            <div class="loading-subtext">Harap tunggu, sedang membaca file Excel</div>
+        </div>
     </div>
 
-    <div class="container" id="mainContainer" style="display: none;">
-        <h1>🔍 Pencarian Produk Inventory</h1>
-        <p class="subtitle">Sistem Pencarian dan Monitoring Stok Produk</p>
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <button class="logout-btn" onclick="logout()">Logout</button>
 
-        <div class="stats-container">
-            <div class="stat-card">
-                <h3>📅 Update Terakhir</h3>
-                <div class="value" id="lastUpdate">-</div>
-            </div>
-            <div class="stat-card">
-                <h3>📦 Total Produk</h3>
-                <div class="value" id="totalProducts">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>📊 Total Sheet</h3>
-                <div class="value" id="totalSheets">0</div>
+        <!-- Header -->
+        <div class="header">
+            <h1>📦 Inventory Checker</h1>
+            <div class="upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+                    <label for="fileInput">📁 Upload Excel</label>
+                </div>
+                <span class="file-name" id="fileName">Belum ada file</span>
+                <span class="last-update" id="lastUpdate"></span>
             </div>
         </div>
 
-        <div class="upload-section">
-            <h2>📤 Upload Database Excel</h2>
-            <div class="file-input-wrapper">
-                <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
-                <label for="fileInput" class="file-input-label">
-                    📁 Pilih File Excel (.xlsx, .xls)
-                </label>
-            </div>
-            <div class="file-name" id="fileName" style="display: none;"></div>
-            <button class="btn btn-danger" onclick="showConfirmModal()">🗑️ Hapus Data</button>
-        </div>
-
+        <!-- Search Section -->
         <div class="search-section">
-            <h2>🔎 Cari Produk</h2>
-            
-            <div class="search-type-selector">
-                <button class="search-type-btn active" onclick="setSearchType('kodebarang')" id="btnKodeBarang">
-                    📋 Cari by KODE BARANG
-                </button>
-                <button class="search-type-btn" onclick="setSearchType('spesifikasi')" id="btnSpesifikasi">
-                    📝 Cari by SPESIFIKASI
-                </button>
+            <div class="search-wrapper">
+                <input type="text" class="search-input" id="searchInput" placeholder="🔍 Cari produk... (contoh: b550m, asus, laptop, dll)" autocomplete="off">
+                <div class="suggestions" id="suggestions"></div>
             </div>
-
-            <div class="search-controls">
-                <input type="text" class="search-input" id="searchInput" placeholder="🔍 Ketik KODE BARANG untuk mencari..." oninput="searchProducts()">
-                <select id="sortSelect" onchange="sortProducts()">
-                    <option value="default">Urutkan: Default</option>
-                    <option value="stock">📊 Stok Terbanyak</option>
-                </select>
-            </div>
-
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);"></div>
-                    <span>Kosong (0)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: linear-gradient(135deg, #ffd93d 0%, #ffb700 100%);"></div>
-                    <span>Stok Sedikit (1-10)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: linear-gradient(135deg, #6bcf7f 0%, #4caf50 100%);"></div>
-                    <span>Stok Cukup (11-50)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
-                    <span>Stok Banyak (>50)</span>
-                </div>
+            <div class="filters">
+                <button class="filter-btn active" onclick="sortBy('default')">Default</button>
+                <button class="filter-btn" onclick="sortBy('stock')">📊 Stok Terbanyak</button>
+                <button class="filter-btn" onclick="sortBy('price')">💰 Harga Termurah</button>
             </div>
         </div>
 
-        <div class="products-container" id="productsContainer">
-            <div class="empty-state">
-                <div class="empty-state-icon">📦</div>
-                <h3>Pilih metode pencarian dan ketik untuk mencari produk</h3>
+        <!-- Results Section -->
+        <div class="results-section">
+            <div class="results-header">
+                <div class="results-count" id="resultsCount">0 produk ditemukan</div>
+            </div>
+            <div id="resultsContainer">
+                <div class="no-data">
+                    <div class="no-data-icon">📦</div>
+                    <h3>Upload file Excel untuk memulai</h3>
+                    <p>Klik tombol "Upload Excel" di atas</p>
+                </div>
             </div>
         </div>
-
-        <div class="watermark">LAU SAPE EMPRUY</div>
     </div>
 
     <script>
-        let db;
-        let displayedProducts = [];
-        let searchType = 'kodebarang'; // default
-        const PASSWORD = 'supernova';
-        const DB_NAME = 'InventoryDB';
-        const DB_VERSION = 1;
-        const STORE_NAME = 'products';
-
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve(db);
-                };
-                
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-                        objectStore.createIndex('sku', 'sku', { unique: false });
-                        objectStore.createIndex('kodeBarang', 'kodeBarang', { unique: false });
-                        objectStore.createIndex('spesifikasi', 'spesifikasi', { unique: false });
-                    }
-                };
-            });
-        }
-
-        async function saveProducts(products) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const objectStore = transaction.objectStore(STORE_NAME);
-                
-                objectStore.clear();
-                
-                let index = 0;
-                const chunkSize = 100;
-                
-                function addChunk() {
-                    const chunk = products.slice(index, index + chunkSize);
-                    if (chunk.length === 0) {
-                        resolve();
-                        return;
-                    }
-                    
-                    chunk.forEach(product => objectStore.add(product));
-                    index += chunkSize;
-                    
-                    setTimeout(addChunk, 0);
-                }
-                
-                addChunk();
-                
-                transaction.onerror = () => reject(transaction.error);
-            });
-        }
-
-        async function getAllProducts() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readonly');
-                const objectStore = transaction.objectStore(STORE_NAME);
-                const request = objectStore.getAll();
-                
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        async function clearProducts() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction([STORE_NAME], 'readwrite');
-                const objectStore = transaction.objectStore(STORE_NAME);
-                const request = objectStore.clear();
-                
-                request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        window.onload = async function() {
-            await initDB();
-            
+        // Global variables
+        let allProducts = [];
+        let filteredProducts = [];
+        let currentSort = 'default';
+        const PASSWORD = 'hadibaik';
+        
+        // Warehouse configuration - sesuai permintaan
+        const DISPLAY_WAREHOUSES = ['1A', '3B', '4B', '4A', '5B', '6A', '6B'];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if already logged in
             if (localStorage.getItem('isLoggedIn') === 'true') {
-                document.getElementById('passwordOverlay').style.display = 'none';
-                document.getElementById('mainContainer').style.display = 'block';
-                await loadStoredData();
+                showApp();
             }
-        };
-
-        function checkPassword() {
-            const input = document.getElementById('passwordInput').value;
-            if (input === PASSWORD) {
-                localStorage.setItem('isLoggedIn', 'true');
-                document.getElementById('passwordOverlay').style.display = 'none';
-                document.getElementById('mainContainer').style.display = 'block';
-                loadStoredData();
-            } else {
-                alert('Password salah!');
-                document.getElementById('passwordInput').value = '';
-            }
-        }
-
-        document.getElementById('passwordInput')?.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                checkPassword();
-            }
+            
+            // Enter key for password
+            document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+            
+            // Search input handler
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', handleSearch);
+            searchInput.addEventListener('focus', handleSearch);
+            
+            // Click outside to close suggestions
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.search-wrapper')) {
+                    document.getElementById('suggestions').style.display = 'none';
+                }
+            });
         });
 
-        function setSearchType(type) {
-            searchType = type;
-            
-            // Update button styles
-            document.getElementById('btnKodeBarang').classList.remove('active');
-            document.getElementById('btnSpesifikasi').classList.remove('active');
-            
-            if (type === 'kodebarang') {
-                document.getElementById('btnKodeBarang').classList.add('active');
-                document.getElementById('searchInput').placeholder = '🔍 Ketik KODE BARANG untuk mencari...';
+        function login() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === PASSWORD) {
+                localStorage.setItem('isLoggedIn', 'true');
+                showApp();
             } else {
-                document.getElementById('btnSpesifikasi').classList.add('active');
-                document.getElementById('searchInput').placeholder = '🔍 Ketik SPESIFIKASI untuk mencari...';
-            }
-            
-            // Re-search if there's already a search term
-            if (document.getElementById('searchInput').value.trim() !== '') {
-                searchProducts();
+                document.getElementById('errorMessage').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('errorMessage').style.display = 'none';
+                }, 3000);
             }
         }
 
-        function showLoading(show, progress = 0) {
-            const overlay = document.getElementById('loadingOverlay');
-            const progressText = document.getElementById('loadingProgress');
-            if (show) {
-                overlay.style.display = 'flex';
-                progressText.textContent = progress + '%';
-            } else {
-                overlay.style.display = 'none';
-            }
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('passwordInput').value = '';
         }
 
-        function handleFileSelect(event) {
+        function showApp() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const fileName = file.name.toLowerCase();
-            if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-                alert('❌ Format file tidak sesuai!\n\nSilakan upload file Excel dengan ekstensi .xlsx atau .xls');
-                event.target.value = '';
-                return;
+            showLoading(true);
+            
+            // Extract date from filename (format: PL-B2C-YY-MM-DD-HHMM.XLSX)
+            const filename = file.name;
+            const match = filename.match(/(\d{2})-(\d{2})-(\d{2})-(\d{2})(\d{2})/);
+            let updateDate = 'Unknown';
+            if (match) {
+                const [_, year, month, day, hour, minute] = match;
+                updateDate = `${day}/${month}/20${year} ${hour}:${minute}`;
             }
+            
+            document.getElementById('fileName').textContent = filename;
+            document.getElementById('lastUpdate').textContent = `📅 Update: ${updateDate}`;
 
-            const maxSize = 50 * 1024 * 1024;
-            if (file.size > maxSize) {
-                alert('❌ Ukuran file terlalu besar!\n\nMaksimum ukuran file adalah 50MB');
-                event.target.value = '';
-                return;
-            }
-
-            document.getElementById('fileName').style.display = 'block';
-            document.getElementById('fileName').textContent = '📄 ' + file.name;
-
-            showLoading(true, 0);
-            setTimeout(() => processFile(file), 100);
-        }
-
-        async function processFile(file) {
             try {
-                showLoading(true, 10);
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
                 
-                const reader = new FileReader();
+                allProducts = [];
                 
-                reader.onload = async function(e) {
-                    try {
-                        showLoading(true, 30);
+                // Process all sheets except AGS10
+                workbook.SheetNames.forEach(sheetName => {
+                    if (sheetName === 'AGS10') return; // Skip AGS10
+                    
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    
+                    // Find header row (row with "SKU NO")
+                    let headerRowIndex = -1;
+                    for (let i = 0; i < Math.min(10, jsonData.length); i++) {
+                        if (jsonData[i] && jsonData[i][0] === 'SKU NO') {
+                            headerRowIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    if (headerRowIndex === -1) return;
+                    
+                    const headers = jsonData[headerRowIndex];
+                    const warehouseRowIndex = headerRowIndex + 2; // Row 4 contains warehouse names
+                    const warehouseNames = jsonData[warehouseRowIndex] || [];
+                    
+                    // Process data rows
+                    for (let i = headerRowIndex + 3; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row || !row[0] || row[0] === 'TOTAL') continue;
                         
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sku = row[0];
+                        const product = row[1];
+                        const kodeBarang = row[2];
+                        const spesifikasi = row[3];
+                        const hargaTokopedia = row[7]; // M3 column
+                        const hargaShopee = row[8]; // M4 column
+                        const totalStock = row[12]; // M column (TOT)
                         
-                        showLoading(true, 50);
+                        // Get warehouse stocks
+                        const warehouses = {};
+                        let gudangLainnya = 0;
                         
-                        const allProducts = [];
-                        let productCount = 0;
-                        
-                        for (let sheetName of workbook.SheetNames) {
-                            showLoading(true, 50 + (workbook.SheetNames.indexOf(sheetName) / workbook.SheetNames.length) * 30);
+                        // Start from column N (index 13)
+                        for (let j = 13; j < Math.min(row.length, 40); j++) {
+                            const warehouseName = warehouseNames[j];
+                            const stock = parseInt(row[j]) || 0;
                             
-                            const worksheet = workbook.Sheets[sheetName];
-                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-                                header: 1,
-                                defval: '',
-                                raw: false
-                            });
-                            
-                            if (jsonData.length < 5) continue;
-                            
-                            const headerRowIndex = 3;
-                            const headerRow = jsonData[headerRowIndex];
-                            
-                            const gudangMapping = {};
-                            const targetGudang = ['1A', '3B', '3C', '4A', '5B', '6A', '6B'];
-                            
-                            headerRow.forEach((cell, index) => {
-                                const cellStr = String(cell).trim();
-                                if (targetGudang.includes(cellStr)) {
-                                    if (!gudangMapping[cellStr]) {
-                                        gudangMapping[cellStr] = index;
-                                    }
+                            if (warehouseName && stock > 0) {
+                                if (DISPLAY_WAREHOUSES.includes(warehouseName)) {
+                                    warehouses[warehouseName] = stock;
+                                } else {
+                                    gudangLainnya += stock;
                                 }
-                            });
-                            
-                            for (let i = 4; i < jsonData.length; i++) {
-                                const row = jsonData[i];
-                                
-                                const sku = String(row[0] || '').trim();
-                                const product = String(row[1] || '').trim();
-                                const kodeBarang = String(row[2] || '').trim(); // Kolom C
-                                const spesifikasi = String(row[3] || '').trim(); // Kolom D
-                                
-                                if (!sku || sku === 'TOTAL' || sku === 'SKU NO') continue;
-                                
-                                const productData = {
-                                    sku: sku,
-                                    product: product,
-                                    kodeBarang: kodeBarang,
-                                    spesifikasi: spesifikasi,
-                                    sheet: sheetName,
-                                    stocks: {}
-                                };
-                                
-                                targetGudang.forEach(gudang => {
-                                    if (gudangMapping[gudang] !== undefined) {
-                                        const colIndex = gudangMapping[gudang];
-                                        const stockValue = row[colIndex];
-                                        productData.stocks[gudang] = parseFloat(stockValue) || 0;
-                                    } else {
-                                        productData.stocks[gudang] = 0;
-                                    }
-                                });
-                                
-                                productData.totalStock = Object.values(productData.stocks).reduce((a, b) => a + b, 0);
-                                
-                                allProducts.push(productData);
-                                productCount++;
                             }
                         }
                         
-                        showLoading(true, 85);
+                        if (gudangLainnya > 0) {
+                            warehouses['LAINNYA'] = gudangLainnya;
+                        }
                         
-                        await saveProducts(allProducts);
-                        
-                        showLoading(true, 95);
-                        
-                        localStorage.setItem('lastUpdate', new Date().toLocaleString('id-ID'));
-                        localStorage.setItem('totalSheets', workbook.SheetNames.length);
-                        localStorage.setItem('totalProducts', productCount);
-                        
-                        showLoading(true, 100);
-                        
-                        setTimeout(() => {
-                            showLoading(false);
-                            updateStats();
-                            alert(`✅ Berhasil memuat ${productCount} produk dari ${workbook.SheetNames.length} sheet!`);
-                        }, 300);
-                        
-                    } catch (error) {
-                        showLoading(false);
-                        console.error('Error processing file:', error);
-                        alert('❌ Gagal memproses file!\n\n' + error.message);
+                        allProducts.push({
+                            sku,
+                            product,
+                            kodeBarang,
+                            spesifikasi,
+                            hargaTokopedia,
+                            hargaShopee,
+                            totalStock: parseInt(totalStock) || 0,
+                            warehouses,
+                            sheet: sheetName
+                        });
                     }
-                };
+                });
                 
-                reader.onerror = function() {
-                    showLoading(false);
-                    alert('❌ Gagal membaca file!');
-                };
+                // Don't show all products initially - wait for search
+                filteredProducts = [];
+                displayProducts(filteredProducts);
                 
-                reader.readAsArrayBuffer(file);
-                
-            } catch (error) {
                 showLoading(false);
-                console.error('Error:', error);
-                alert('❌ Terjadi kesalahan!\n\n' + error.message);
-            }
-        }
-
-        async function loadStoredData() {
-            try {
-                const products = await getAllProducts();
-                if (products && products.length > 0) {
-                    updateStats();
-                }
             } catch (error) {
-                console.error('Error loading data:', error);
+                console.error('Error processing file:', error);
+                alert('Error membaca file Excel. Pastikan format file benar.');
+                showLoading(false);
             }
         }
 
-        function updateStats() {
-            document.getElementById('lastUpdate').textContent = localStorage.getItem('lastUpdate') || '-';
-            document.getElementById('totalProducts').textContent = localStorage.getItem('totalProducts') || '0';
-            document.getElementById('totalSheets').textContent = localStorage.getItem('totalSheets') || '0';
+        function handleSearch(e) {
+            const query = e.target.value.toLowerCase().trim();
+            const suggestionsDiv = document.getElementById('suggestions');
+            
+            if (!query || allProducts.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                filteredProducts = []; // Don't show products when no search
+                displayProducts(filteredProducts);
+                return;
+            }
+            
+            // Filter products
+            filteredProducts = allProducts.filter(p => {
+                return (
+                    (p.sku && p.sku.toLowerCase().includes(query)) ||
+                    (p.product && p.product.toLowerCase().includes(query)) ||
+                    (p.kodeBarang && p.kodeBarang.toLowerCase().includes(query)) ||
+                    (p.spesifikasi && p.spesifikasi.toLowerCase().includes(query))
+                );
+            });
+            
+            // Show suggestions (limit to 10)
+            if (filteredProducts.length > 0) {
+                const suggestions = filteredProducts.slice(0, 10);
+                suggestionsDiv.innerHTML = suggestions.map(p => {
+                    // Show SKU, KODEBARANG, and SPESIFIKASI
+                    const displayText = `${p.sku} - ${p.kodeBarang || 'N/A'} - ${p.spesifikasi}`.substring(0, 100);
+                    const highlighted = highlightMatch(displayText, query);
+                    return `<div class="suggestion-item" onclick="selectSuggestion('${p.sku}')">${highlighted}</div>`;
+                }).join('');
+                suggestionsDiv.style.display = 'block';
+            } else {
+                suggestionsDiv.innerHTML = '<div class="suggestion-item">Tidak ada hasil</div>';
+                suggestionsDiv.style.display = 'block';
+            }
+            
+            displayProducts(filteredProducts);
         }
 
-        async function searchProducts() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+        function highlightMatch(text, query) {
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="suggestion-highlight">$1</span>');
+        }
+
+        function selectSuggestion(sku) {
+            const product = allProducts.find(p => p.sku === sku);
+            if (product) {
+                document.getElementById('searchInput').value = product.spesifikasi;
+                filteredProducts = [product];
+                displayProducts(filteredProducts);
+                document.getElementById('suggestions').style.display = 'none';
+            }
+        }
+
+        function sortBy(type) {
+            currentSort = type;
             
-            if (searchTerm === '') {
-                displayedProducts = [];
-                document.getElementById('productsContainer').innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📦</div>
-                        <h3>Pilih metode pencarian dan ketik untuk mencari produk</h3>
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            let sorted = [...filteredProducts];
+            
+            if (type === 'stock') {
+                sorted.sort((a, b) => b.totalStock - a.totalStock);
+            } else if (type === 'price') {
+                sorted.sort((a, b) => {
+                    const priceA = (parseFloat(a.hargaShopee) || parseFloat(a.hargaTokopedia) || 999999999) * 1000;
+                    const priceB = (parseFloat(b.hargaShopee) || parseFloat(b.hargaTokopedia) || 999999999) * 1000;
+                    return priceA - priceB;
+                });
+            }
+            
+            displayProducts(sorted);
+        }
+
+        function displayProducts(products) {
+            const container = document.getElementById('resultsContainer');
+            const countDiv = document.getElementById('resultsCount');
+            
+            countDiv.textContent = `${products.length} produk ditemukan`;
+            
+            if (products.length === 0) {
+                container.innerHTML = `
+                    <div class="no-data">
+                        <div class="no-data-icon">🔍</div>
+                        <h3>Mulai cari produk</h3>
+                        <p>Ketik nama produk, SKU, atau kode barang di kolom pencarian</p>
                     </div>
                 `;
                 return;
             }
-
-            try {
-                const allProducts = await getAllProducts();
-                
-                if (searchType === 'kodebarang') {
-                    displayedProducts = allProducts.filter(p => 
-                        p.kodeBarang.toLowerCase().includes(searchTerm)
-                    );
-                } else {
-                    displayedProducts = allProducts.filter(p => 
-                        p.spesifikasi.toLowerCase().includes(searchTerm)
-                    );
-                }
-
-                displayProducts();
-            } catch (error) {
-                console.error('Error searching:', error);
-            }
+            
+            const html = `
+                <div class="product-grid">
+                    ${products.map(p => createProductCard(p)).join('')}
+                </div>
+            `;
+            
+            container.innerHTML = html;
         }
 
-        function sortProducts() {
-            const sortType = document.getElementById('sortSelect').value;
+        function createProductCard(product) {
+            const stockClass = getStockClass(product.totalStock);
             
-            if (sortType === 'stock') {
-                displayedProducts.sort((a, b) => b.totalStock - a.totalStock);
-            } else {
-                displayedProducts.sort((a, b) => a.sku.localeCompare(b.sku));
-            }
+            // Create warehouse items
+            let warehouseHTML = '';
+            DISPLAY_WAREHOUSES.forEach(wh => {
+                const qty = product.warehouses[wh] || 0;
+                const whClass = getStockClass(qty);
+                warehouseHTML += `
+                    <div class="warehouse-item ${whClass}">
+                        <div class="warehouse-name">${wh}</div>
+                        <div class="warehouse-qty">${qty}</div>
+                    </div>
+                `;
+            });
             
-            displayProducts();
+            // Add GUDANG LAINNYA
+            const lainnyaQty = product.warehouses['LAINNYA'] || 0;
+            const lainnyaClass = getStockClass(lainnyaQty);
+            warehouseHTML += `
+                <div class="warehouse-item ${lainnyaClass}">
+                    <div class="warehouse-name">LAINNYA</div>
+                    <div class="warehouse-qty">${lainnyaQty}</div>
+                </div>
+            `;
+            
+            return `
+                <div class="product-card">
+                    <div class="product-header">
+                        <div class="product-sku">${product.sku || '-'}</div>
+                        <div class="product-name">${product.spesifikasi || '-'}</div>
+                        <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                            <span class="product-category">${product.product || '-'}</span>
+                            ${product.kodeBarang ? `<span class="product-category" style="background: #e3f2fd; color: #1976d2;">📋 ${product.kodeBarang}</span>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="product-prices">
+                        ${product.hargaTokopedia ? `
+                            <div class="price-row">
+                                <span class="price-label">💚 Tokopedia</span>
+                                <span class="price-value">Rp ${formatNumber(product.hargaTokopedia * 1000)}</span>
+                            </div>
+                        ` : ''}
+                        ${product.hargaShopee ? `
+                            <div class="price-row">
+                                <span class="price-label">🧡 Shopee</span>
+                                <span class="price-value">Rp ${formatNumber(product.hargaShopee * 1000)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="stock-section">
+                        <div class="stock-total">
+                            <span class="stock-total-label">TOTAL STOK</span>
+                            <span class="stock-total-value">${product.totalStock}</span>
+                        </div>
+                        
+                        <div class="warehouse-grid">
+                            ${warehouseHTML}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function getStockClass(stock) {
             if (stock === 0) return 'stock-empty';
-            if (stock <= 10) return 'stock-low';
-            if (stock <= 50) return 'stock-medium';
-            return 'stock-high';
+            if (stock <= 5) return 'stock-low';
+            return 'stock-good';
         }
 
-        function getStockStatus(stock) {
-            if (stock === 0) return 'Kosong';
-            if (stock <= 10) return 'Sedikit';
-            if (stock <= 50) return 'Cukup';
-            return 'Banyak';
-        }
-
-        function displayProducts() {
-            const container = document.getElementById('productsContainer');
-            
-            if (displayedProducts.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🔍</div>
-                        <h3>Tidak ada produk yang ditemukan</h3>
-                        <p>Coba kata kunci lain atau ubah metode pencarian</p>
-                    </div>
-                `;
-                return;
-            }
-
-            let html = '';
-            displayedProducts.forEach(product => {
-                html += `
-                    <div class="product-card">
-                        <div class="product-header">
-                            <div class="product-spesifikasi">${product.spesifikasi || '-'}</div>
-                            <div class="product-kodebarang">Kode: ${product.kodeBarang || '-'}</div>
-                            <div class="product-sku">SKU: ${product.sku} | ${product.product || '-'}</div>
-                        </div>
-                        <div class="product-info">
-                            <div style="font-size: 0.9em; color: #999;">Sheet: ${product.sheet}</div>
-                            <div style="font-size: 1.2em; font-weight: bold; color: #667eea;">Total: ${product.totalStock}</div>
-                        </div>
-                        <div class="stock-grid">
-                            ${['1A', '3B', '3C', '4A', '5B', '6A', '6B'].map(gudang => {
-                                const stock = product.stocks[gudang] || 0;
-                                const stockClass = getStockClass(stock);
-                                const stockStatus = getStockStatus(stock);
-                                return `
-                                    <div class="stock-item ${stockClass}">
-                                        <div class="stock-label">Gudang ${gudang}</div>
-                                        <div class="stock-value">${stock}</div>
-                                        <div class="stock-status">${stockStatus}</div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function showConfirmModal() {
-            document.getElementById('confirmModal').style.display = 'flex';
-        }
-
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').style.display = 'none';
-        }
-
-        async function confirmDelete() {
-            try {
-                await clearProducts();
-                localStorage.removeItem('lastUpdate');
-                localStorage.removeItem('totalSheets');
-                localStorage.removeItem('totalProducts');
-                displayedProducts = [];
-                updateStats();
-                document.getElementById('searchInput').value = '';
-                document.getElementById('fileName').style.display = 'none';
-                document.getElementById('fileInput').value = '';
-                searchProducts();
-                closeConfirmModal();
-                alert('✅ Semua data berhasil dihapus!');
-            } catch (error) {
-                console.error('Error deleting:', error);
-                alert('❌ Gagal menghapus data!');
-            }
+        function formatNumber(num) {
+            if (!num) return '0';
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
     </script>
 </body>
